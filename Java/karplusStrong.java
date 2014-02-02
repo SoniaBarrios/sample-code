@@ -1,27 +1,32 @@
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
+//import java.util.Arrays;
 
 public class karplusStrong {
 	
 	public static void main(String[] args) throws IOException, WavFileException {
-		//testClass test = new testClass();
+		//Initialize parameters
 		double fs = 44100;				//sampling frequency
-		double freq = 200;				//frequency of note output
-		double amp = 0.9;				//amplitude of input
-		double fb = 0.98;				//feedback for delay line
 		
-		NoiseBurst noise = new NoiseBurst(fs, freq, amp);	//create input
-		double [] output = new double [(int)fs*3];				//create output vector
-		double [] input = noise.samples;
+		double freq = 277.81;			//frequency of resulting tone
+		double amp = 0.9;				//amplitude of noise burst
+		double t_output = 3;			//length of output (in seconds)
 		
-		System.out.println(Arrays.toString(input));		//check array content
+		double fb = 0.96;				//feedback ratio of delay line
 		
-		output = delayInput(input,output,fb,noise.sampDelay, fs);
+		//Create arrays for input/output
+		NoiseBurst noise = new NoiseBurst(fs, freq, amp);		//create a burst of noise
+		double [] output = new double [(int) (fs*t_output)];	//create an empty output vector (length rounded)
+		
+		//Run noise burst through a fed-back delay line
+		output = delayWithfb(noise.samples, output, fb, noise.samples.length, fs);
+		
+		//Write fed-back noise to a wave file
 		writeAudio("ks.wav", output, fs);
 	}
 	
-	public static double [] delayInput(double [] input, double [] output, double fb, int sampDelay, double fs) {
+	//delays input and low-pass filters before feeding back
+	public static double [] delayWithfb(double [] input, double [] output, double fb, int sampDelay, double fs) {
 		int i;									//index for array iteration
 		
 		//parameters for delay line
@@ -31,28 +36,31 @@ public class karplusStrong {
 		double y;								//sample to be written (delayed sample)
 		double [] delayline = new double [m];	//circular delay line
 		
-		//parameters for lowpass filter
-		double fc = 400;		//cut-off frequency
-		double c = (Math.tan(Math.PI*fc/fs)-1)/(Math.tan(Math.PI*fc/fs)+1);
-		double xLast = 0;
-		double yLast = 0;
+		//parameters for low-pass filter - DAFX pg. 40
+		double fc = 300;						//cut-off frequency
+		double xLast = 0;						//x(n-1)
+		double yLast = 0;						//y(n-1)
 		
-		//fill delayline with 0s - COULD MAKE A CIRCULAR BUFFER CLASS
+		//initialize delay line by filling with 0s
 		delayline = fillWithZeros(delayline);
 		
-		//delay signal with circular delay, lowpass filter 
+		//create new LowpassFilter object
+		LowpassFilter lpf = new LowpassFilter(fc);
+		
+		//delay signal with circular delay, followed by a low-pass filter 
 		for(i=0;i<output.length;i++) {
-			//check for continued input samples, else read input as zero
+			
+			//check for more input samples, otherwise assume input is zero
 			if(i>=input.length) {
-				x = 0;							//use zero when there is no more input samples
+				x = 0;							//input is zero when there are no more input samples
 			} else {							
-				x = input[i];					//else delay input for as long as there are samples
+				x = input[i];					//otherwise, delay incoming samples
 			}
 			
-			//ADD INPUT TO DELAY LINE
+			//feedback output to input
 			x = fb*(x + delayline[ptr]);
 			
-			//DELAY SAMPLE WITH CIRCULAR BUFFER
+			//delay using a circular buffer
 			y = delayline[ptr];					//write sample to output from circular buffer
 			delayline[ptr] = x;					//read sample from input
 			ptr = ptr + 1;						//update circular pointer
@@ -62,21 +70,21 @@ public class karplusStrong {
 				ptr = ptr - m;
 			}
 			
-			//LOWPASS FILTER -  1-pole
-			//-------------------------------------------------------
-			// H(z) = 0.5*(1+[(z^-1+c)/(1+c*z^-1)])
-			// ...where c = (tan(pi*fc/fs)-1)/(tan(pi*fc/fs)+1)
-			// => y(n) = 0.5*(c+1)*x(n) + 0.5*(c+1)*x(n-1) - c*y(n-1)
-			y = 0.5*(c+1)*x + 0.5*(c+1)*xLast - c*yLast;
+			//filter sample with a 1-pole lowpass filter
+			y = lpf.filter(x,xLast,yLast);
 			
+			//write sample to output
 			output[i] = y;
+			
+			//save last samples for next filter calculation
 			xLast = x;
 			yLast = y;
 		}
 		
 		return output;	//return output array
-	}
+	}//end delayWithfb method
 	
+	//fill an array with values of zero
 	public static double [] fillWithZeros(double [] arrayToFill) {
 		int i;			//index, for array iteration
 		
@@ -85,26 +93,30 @@ public class karplusStrong {
 			arrayToFill[i] = 0;
 		}
 		
+		//return zeroed array
 		return arrayToFill;
-	}
+	}//end filleWithZeros method
 	
+	//Write samples to a .wav file
+	//Uses the WaveFile IO class written by A. Greensted
+	//http://www.labbookpages.co.uk
 	static void writeAudio(String outputName, double [] samples, double fs_dbl) throws IOException, WavFileException {
 		//initialize variables
-		int fs = (int)fs_dbl;							// Samples per second = sample rate
-		int numChannels = 1;					// number of channels in audio file. 1=mono, 2=stereo etc...
-		int bitDepth = 24;						// number of bits used to represent sample amplitudes
-		int numFrames = samples.length;			// number of frames for specified duration
+		int fs = (int)fs_dbl;					//samples per second = sample rate
+		int numChannels = 1;					//number of channels in audio file. 1=mono, 2=stereo etc...
+		int bitDepth = 24;						//number of bits used to represent sample amplitudes
+		int numFrames = samples.length;			//number of frames for specified duration
 		
 		//initialize objects
 		WavFile wavFile;
 
-		// Create a wav file with the name specified as the first argument
+		//Create a wav file with the name specified as the first argument
 		wavFile = WavFile.newWavFile(new File(outputName), numChannels, numFrames, bitDepth, fs);
 
-		// Write the buffer
+		//Write the buffer
 		wavFile.writeFrames(samples, numFrames);
 
-		// Close the wavFile
+		//Close the wavFile
 		wavFile.close();
 	} //end writeAudio method
 }
