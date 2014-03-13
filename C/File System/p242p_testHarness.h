@@ -172,18 +172,3 @@ int test_create_file(int disk) {
     
     return homeID;
 }
-//modify, then write a file
-//read a file
-
-//shutdown system
-
-//on re-boot, recognize disk
-//print current state of file system
-
-//create a new directory within the home directory
-//create a new file within this new directory
-//shutdown system
-
-//print contents of filesystem
-
-//exit
