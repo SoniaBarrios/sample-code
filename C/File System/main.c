@@ -72,57 +72,6 @@ int main (int argc, const char * argv[])
     printf("\nShowing updated ilist after directory creation \n(last element is ilist index containing ID of next available inode):\n");
     print_int_array(retrieve_ilist(disk), NUM_INODES+1);
     
-    //printf("\nCurrent children of home directory:\n");
-    
-    //modify, then write a file
-    //read a file
-    
-    //shutdown system
-    
-    //on re-boot, recognize disk
-    //print current state of file system
-    
-    //create a new directory within the home directory
-    //create a new file within this new directory
-    //shutdown system
-    
-    //print contents of filesystem
-    
-    //exit
-    
-    
-    
-    
-    /*
-    int disk, disk_size;
-    int *freeList;
-    //int blockNr;
-    
-    disk_size = NUM_BLOCKS*BLOCK_SIZE;
-    disk = openDisk("disk",disk_size);              //make a new disk of 16 blocks
-    
-                                                    //Need to make a case for freeList already existing
-    create_FreeList(disk);                          //writes free list to disk when completed
-    freeList = retrieve_freeList(disk);     //pointer to first element of free list
-    
-    //load/create ilist - make a case if ilist already exists
-    create_ilist(disk, freeList);
-    
-    
-    create_file(disk, "testFile", "parentFile");
-    //createDirectory("Home",-1);                     //-1 denotes top directory
-    
-     //confirm retrival of free list - WORKS
-     for(blockNr=0;blockNr<FREELIST_SIZE;blockNr++) {
-     //printf("freeList[blockNr] = %i\n",freeList[blockNr]);
-         printf("freeList[%i] = %i\n",blockNr,freeList[blockNr]);
-     }
-    
-    free(freeList);
-     */
-    
-    
-    
     return 0;
 }
 
