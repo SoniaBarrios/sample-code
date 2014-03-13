@@ -83,13 +83,6 @@ void write_freeList(int disk, int freeList[]) {
      
     writeBuffer = freeList;
     
-    /*
-    for(blockNr=0;blockNr<FREELIST_SIZE;blockNr++) {
-        printf("freeList[blockNr] = %i\n",freeList[blockNr]);
-        printf("writeBuffer[blockNr] = %i\n",(*(int*)(writeBuffer+blockNr*4)));
-    }
-    */
-    
     if((bytesWritten = writeBlock(disk,blockToWriteTo,writeBuffer)) < 0){
         printf("Error: Free-List failed to write to disk\n");
         globalFail=1;
@@ -156,9 +149,6 @@ void create_ilist(int disk, int freeList[]) {
         printf("Error: inode names list failed to write to disk\n");
         globalFail = 1;
     }
-    
-    //free(ilist);
-    //free(ilistNames);
 }
 
 int *retrieve_ilist(int disk) {
@@ -223,8 +213,6 @@ iNode *create_iNode(int disk) {
 void write_iNode(int disk, iNode *inodeToWrite, int block) {
     //only need to write the diskmap to a block since inode is referenced by name and ID elsewhere (ilist, ilistnames)
     void *writeBuffer;
-    //int nodeArray[DISKMAP_SIZE+1];
-    //nodeArray[0] = (*inodeToWrite).inode_id;
     
     writeBuffer=(*inodeToWrite).diskmap;                                           
     writeBlock(disk, block, writeBuffer);     //write to disk
@@ -249,7 +237,6 @@ iNode *retrieve_iNode(int disk, int inodeID) {
 }
 
 //File operations------------------------------------------------------------------------------
-//NOT COMPLETED
 //takes disk identifier, filename and parent directory filename as arguments
 //creates a file by associating an inode with it and storing the meta-data
 //returns inode id for the file created
@@ -326,13 +313,6 @@ void write_file(int disk, file *fileToWrite) {
     //Step 3 - update parent directory to list this file as a child
     file_iNode = retrieve_iNode(disk, (*fileToWrite).inodeID);          //reusing this variable to retrieve the parent's iNode...
     
-    //NEED TO FIGURE OUT INDIRECT BLOCKS HERE
-    //block 0 is home directory, block 1-9 are inode ids, block 10 contains indirect 1 for inodes(10-23)
-    //inodes 24-34 stored in 0-9 of 2nd indirect diskmap
-    //      - 35-48 stored in the inode that is pointed to in block 10 of this inode
-    //      - 49-62 in the inode that is in block 11
-    //      - 63-76 in the inode that is in block 12
-    //third-level indirect...                                                      
     (*file_iNode).diskmap[(*fileToWrite).inodeID] = 1;                  //indicate that this inodeID is a child of the directory
     write_iNode(disk, file_iNode,retrieve_ilist(disk)[(*file_iNode).inode_id]);                         //write the parent directory to disk
 }
@@ -361,9 +341,6 @@ file *retrieve_file(int disk, char* file_name) {
 }
 
 //Directory operations-------------------------------------------------------------------------
-//THESE FUNCTIONS ARE NOT FINISHED
-//NEED TO INITIALIZE CHILDREN ARRAY
-//      IF NOT A CHILD, USE -1, otherwise store 1 to indicate that the inodeID associate with the array index IS a child
 int create_dir(int disk, char *dirName, char *parentName) {
     int child;
     
@@ -381,13 +358,6 @@ int create_dir(int disk, char *dirName, char *parentName) {
     
     return (*newDir).dir.inodeID;
 }
-
-void write_dir(int disk, directory *dirToWrite) {
-    //
-}
-
-directory *retrieve_dir(int disk, char *dir_name);
-
 
 //Testing Functions
 void print_int_array(int *array,int indexMax) {
