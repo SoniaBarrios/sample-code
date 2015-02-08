@@ -1,0 +1,44 @@
+#! /bin/bash
+
+# AUTHOR: Michael Dean 2015
+# http://www.michaeldean.ca
+
+# SCRIPT DESCRIPTION
+# Destroys a virtual host configuration consistent with current server
+
+# Get domain name to remove
+if [ -n "$1" ]
+then
+        domain=$1
+        echo "Removal for virtual host ${domain}..."
+else
+        echo "Please enter the domain name you wish to remove (including TLD):"
+	ls /var/www/
+	read domain
+fi
+
+# confirm removal (just in case)
+echo "Are you sure you wish to remove all files associate with virtual host ${domain}? (y/n)"
+read response
+
+# Test for yes, otherwise quit
+if [ "X$response" = "Xy" ]
+then
+	# disable site
+	a2dissite ${domain}.conf
+
+	# restart apache
+	service apache2 reload
+	
+	# remove file directories
+	rm -r "/var/www/${domain}"
+	
+	# remove configuration files
+	rm "/etc/apache2/sites-available/${domain}.conf"
+
+	echo "Virtual host removed successfully"
+	exit 0
+else	
+	echo "Operation aborted!"
+	exit 1
+fi

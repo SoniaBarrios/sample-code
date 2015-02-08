@@ -1,0 +1,53 @@
+#! /bin/bash
+
+# AUTHOR: Michael Dean 2015
+# http://www.michaeldean.ca
+
+# SCRIPT DESCRIPTION
+# Sets up a virtual host configuration consistent with current server
+# All virtual hosts are set-up in /var/www/
+# Don't forget to set-up DNS settings with an A name record to the server's IP
+
+# Get domain name from user input
+if [ -n "$1" ]
+then
+	domain=$1
+	echo "Creating virtual host for ${domain}"
+else
+	echo "Please enter the domain name you wish to add (including TLD):"
+	read domain
+fi
+
+# Set up neccessary directories
+mkdir "/var/www/${domain}/"
+mkdir "/var/www/${domain}/public_html/"
+
+# Setup a test index.html file
+echo "<html>
+<head>
+	<title>${domain}</title>
+</head>
+
+<body>
+	<p>Virtual host ${domain} set-up default page.</p>
+</body>
+</html>" > "/var/www/${domain}/public_html/index.html"
+
+# Make mdean the default owner
+chown -R mdean:admin "/var/www/${domain}/public_html/"
+
+# Make sure permissions for all websites are group/world readable/executable
+chmod -R 755 /var/www/
+
+# Create configuration file
+cp "/etc/apache2/sites-available/default" "/etc/apache2/sites-available/${domain}.conf"
+
+# Modify configuration file for new domain
+# replace every occurance of "domain.tld" with the domain entered by user
+sed -i "s/domain.tld/${domain}/g" "/etc/apache2/sites-available/${domain}.conf"
+
+# Enable site
+a2ensite "${domain}.conf"
+
+# Activate new configuration
+service apache2 reload
