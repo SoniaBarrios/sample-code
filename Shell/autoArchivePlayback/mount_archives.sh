@@ -10,7 +10,7 @@
 # Assumes this file is owned/executable by root (chown root:wheel, chmod 700), and added to visudo file for MCR user
 #	username  ALL=(ALL) NOPASSWD: /Scripts/mount_archives.sh
 # Script is launched when Mac computer boots (from launchd .plist file)
-# 	launchd file stored here: /Library/LaunchAgents/com.ckutsys.mount_archives.plist
+# 	launchd file stored here: /Library/LaunchAgents/com.volunteers.mount_archives.plist
 # This allows the automatic archive playback system to function when dead air is detected
 # 	The automatic archive playback system is found at: /etc/ckut-liq/remote_play_archive.sh
 
